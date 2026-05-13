@@ -27,6 +27,18 @@ def get_top_season():
         print(f"API error: {e}")
         return []
 
+# Функция 3: Случайное аниме
+def get_random_anime():
+    url = "https://api.jikan.moe/v4/random/anime"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json().get("data")
+        return None
+    except Exception as e:
+        print(f"API error: {e}")
+        return None
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -43,6 +55,11 @@ def api_search():
 def api_top():
     results = get_top_season()
     return jsonify({"success": True, "data": results})
+
+@app.route('/api/random')
+def api_random():
+    result = get_random_anime()
+    return jsonify({"success": True, "data": result})
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)

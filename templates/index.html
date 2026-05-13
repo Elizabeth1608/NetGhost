@@ -18,6 +18,7 @@
     <input type="text" id="searchInput" placeholder="Название аниме...">
     <button onclick="search()">Найти</button>
     <button onclick="loadTop()">Топ сезона</button>
+    <button onclick="loadRandom()">Случайное аниме</button>
     
     <div id="results"></div>
 
@@ -30,45 +31,44 @@
             
             const resp = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
             const data = await resp.json();
-            
-            if (data.success && data.data.length > 0) {
-                let html = '';
-                for (let anime of data.data) {
-                    html += `
-                        <div class="result">
-                            <strong>${anime.title}</strong><br>
-                            Рейтинг: ${anime.score || 'Нет'} | Эпизодов: ${anime.episodes || '?'}<br>
-                            Жанры: ${anime.genres ? anime.genres.map(g => g.name).join(', ') : 'Не указаны'}
-                        </div>
-                    `;
-                }
-                document.getElementById('results').innerHTML = html;
-            } else {
-                document.getElementById('results').innerHTML = 'Ничего не найдено';
-            }
+            displayResults(data.data, 'Результаты поиска');
         }
         
         async function loadTop() {
             document.getElementById('results').innerHTML = 'Загрузка...';
-            
             const resp = await fetch('/api/top');
             const data = await resp.json();
-            
-            if (data.success && data.data.length > 0) {
-                let html = '<h2>Топ аниме этого сезона</h2>';
-                for (let anime of data.data) {
-                    html += `
-                        <div class="result">
-                            <strong>${anime.title}</strong><br>
-                            Рейтинг: ${anime.score || 'Нет'} | Эпизодов: ${anime.episodes || '?'}<br>
-                            Жанры: ${anime.genres ? anime.genres.map(g => g.name).join(', ') : 'Не указаны'}
-                        </div>
-                    `;
-                }
-                document.getElementById('results').innerHTML = html;
+            displayResults(data.data, 'Топ аниме этого сезона');
+        }
+        
+        async function loadRandom() {
+            document.getElementById('results').innerHTML = 'Загрузка...';
+            const resp = await fetch('/api/random');
+            const data = await resp.json();
+            if (data.data) {
+                displayResults([data.data], 'Случайное аниме');
             } else {
-                document.getElementById('results').innerHTML = 'Не удалось загрузить топ сезона';
+                document.getElementById('results').innerHTML = 'Не удалось загрузить';
             }
+        }
+        
+        function displayResults(animeList, title) {
+            if (!animeList || animeList.length === 0) {
+                document.getElementById('results').innerHTML = 'Ничего не найдено';
+                return;
+            }
+            
+            let html = `<h2>${title}</h2>`;
+            for (let anime of animeList) {
+                html += `
+                    <div class="result">
+                        <strong>${anime.title}</strong><br>
+                        Рейтинг: ${anime.score || 'Нет'} | Эпизодов: ${anime.episodes || '?'}<br>
+                        Жанры: ${anime.genres ? anime.genres.map(g => g.name).join(', ') : 'Не указаны'}
+                    </div>
+                `;
+            }
+            document.getElementById('results').innerHTML = html;
         }
     </script>
 </body>
