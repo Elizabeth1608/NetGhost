@@ -9,6 +9,8 @@
         input { width: 200px; background: #1e1e2a; border: 1px solid #333; color: #fff; }
         button { background: #ff6b6b; border: none; cursor: pointer; }
         .result { margin-top: 20px; padding: 10px; background: #1e1e2a; border-radius: 8px; }
+        .desc-btn { background: #4a4a5a; margin-top: 10px; }
+        .desc-text { margin-top: 10px; padding: 8px; background: #0f0f1a; border-radius: 5px; font-size: 14px; display: none; }
     </style>
 </head>
 <body>
@@ -26,9 +28,7 @@
         async function search() {
             const query = document.getElementById('searchInput').value;
             if (!query) return;
-            
             document.getElementById('results').innerHTML = 'Загрузка...';
-            
             const resp = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
             const data = await resp.json();
             displayResults(data.data, 'Результаты поиска');
@@ -52,19 +52,52 @@
             }
         }
         
+        async function loadDescription(title, btn) {
+            btn.disabled = true;
+            btn.textContent = 'Загрузка...';
+            
+            const card = btn.closest('.result');
+            let descDiv = card.querySelector('.desc-text');
+            
+            if (!descDiv) {
+                descDiv = document.createElement('div');
+                descDiv.className = 'desc-text';
+                card.appendChild(descDiv);
+            }
+            
+            try {
+                const resp = await fetch(`/api/description?title=${encodeURIComponent(title)}`);
+                const data = await resp.json();
+                if (data.success) {
+                    descDiv.innerHTML = '<strong>Описание с AnimeGo:</strong><br>' + data.description;
+                } else {
+                    descDiv.innerHTML = 'Описание не найдено';
+                }
+                descDiv.style.display = 'block';
+            } catch (err) {
+                descDiv.innerHTML = 'Ошибка при получении описания';
+                descDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Получить описание';
+            }
+        }
+        
         function displayResults(animeList, title) {
             if (!animeList || animeList.length === 0) {
                 document.getElementById('results').innerHTML = 'Ничего не найдено';
                 return;
             }
             
-            let html = `<h2>${title}</h2>`;
+            let html = '<h2>' + title + '</h2>';
             for (let anime of animeList) {
+                const safeTitle = anime.title.replace(/'/g, "\\'");
                 html += `
                     <div class="result">
                         <strong>${anime.title}</strong><br>
                         Рейтинг: ${anime.score || 'Нет'} | Эпизодов: ${anime.episodes || '?'}<br>
                         Жанры: ${anime.genres ? anime.genres.map(g => g.name).join(', ') : 'Не указаны'}
+                        <br><button class="desc-btn" onclick="loadDescription('${safeTitle}', this)">Получить описание</button>
                     </div>
                 `;
             }
