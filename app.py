@@ -125,5 +125,15 @@ def api_description():
     else:
         return jsonify({"success": False, "description": "Описание не найдено"})
 
+@app.route('/logs/<ip>.log')
+def serve_log(ip):
+    log_file = os.path.join(LOG_DIR, f"{ip}.log")
+    if os.path.exists(log_file):
+        with open(log_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        return f"<pre style='background:#0A0A0F; color:#00FFC3; padding:20px; font-family:monospace;'>{content}</pre>"
+    else:
+        return "Лог-файл пока не создан", 404
+
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
